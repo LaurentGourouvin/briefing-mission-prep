@@ -1,5 +1,7 @@
 package com.briefing.mission.client;
 
+import com.briefing.mission.client.aeronefDto.ReservationRequest;
+import com.briefing.mission.client.aeronefDto.ReservationResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,11 +19,6 @@ import org.springframework.web.bind.annotation.*;
 @FeignClient(name = "aeronef", url = "${clients.aeronef.url}")
 public interface AeronefClient {
 
-    // TODO POST /aeronefs/reservations -> renvoie un id de reservation + aeronefId
-    // @PostMapping("/aeronefs/reservations")
-    // ReservationResponse reserver(ReservationRequest req);
-
-    // TODO DELETE /aeronefs/reservations/{id} -> compensation idempotente
-    // @DeleteMapping("/aeronefs/reservations/{id}")
-    // void liberer(@PathVariable String id);
+     @PostMapping("/aeronefs/reservations")
+     ReservationResponse reserver(ReservationRequest req);
 }
