@@ -1,0 +1,77 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: mission-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/mission_db
+    username: briefing
+    password: briefing
+  jpa:
+    hibernate:
+      ddl-auto: update        # OK en dev/entrainement ; en prod -> migrations (Flyway/Liquibase)
+    open-in-view: false
+  kafka:
+    bootstrap-servers: localhost:19092   # host -> Redpanda (port EXTERNAL mappe)
+    producer:
+      acks: all               # at-least-once : durable, mais duplicats possibles -> consumer idempotent
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+# URLs des services appeles en SYNC (Feign). En local hors Docker : localhost:<port>.
+clients:
+  aeronef:
+    url: http://localhost:8081
+  clearance:
+    url: http://localhost:8082
+
+# ---------------------------------------------------------------------------
+#  RESILIENCE4J (Etape 2). Config declarative ; les annotations
+#  @Retry/@CircuitBreaker/@TimeLimiter referencent ces "instances" par nom.
+#
+#  ORDRE DES ASPECTS (a savoir expliquer) - de l'exterieur vers l'interieur :
+#    Retry ( CircuitBreaker ( RateLimiter ( TimeLimiter ( Bulkhead ( appel ) ) ) ) )
+#  => le Retry est le PLUS externe : il reessaie APRES que le circuit breaker a
+#     vu l'echec. Consequence : chaque tentative compte dans le circuit breaker,
+#     et un retry peut rouvrir/alimenter le circuit. Ordre configurable.
+#
+#  TIMEOUTS EN CASCADE (footgun) : si retry(3) x timeout(2s) = jusqu'a 6s cote
+#  mission, mais que l'appelant HTTP coupe a 5s, tu empiles des blocages et tu
+#  rends une 504 alors que le travail continue en fond. Budgette : somme des
+#  tentatives < timeout de l'appelant.
+# ---------------------------------------------------------------------------
+resilience4j:
+  circuitbreaker:
+    instances:
+      aeronef:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        failure-rate-threshold: 50           # >=50% d'echecs sur la fenetre -> OPEN
+        wait-duration-in-open-state: 5s      # reste OPEN 5s puis -> HALF_OPEN
+        permitted-number-of-calls-in-half-open-state: 3
+        # A l'oral : OPEN = on rejette VITE (fail fast) sans appeler le service
+        # tombe -> on le protege ET on se protege (pas de threads bloques).
+        # HALF_OPEN = on laisse passer qq appels de test ; s'ils passent -> CLOSED.
+  retry:
+    instances:
+      aeronef:
+        max-attempts: 3
+        wait-duration: 300ms
+        # NE RETRY QUE les erreurs transitoires (5xx, IO, timeout).
+        # NE JAMAIS retry un refus metier (4xx deterministe) -> retry-exceptions / ignore-exceptions.
+  timelimiter:
+    instances:
+      aeronef:
+        timeout-duration: 2s
+        # TimeLimiter impose un retour Future/CompletableFuture (thread separe) ->
+        # attention a la propagation du MDC (correlation-id) sur ce thread (Etape 5).
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,circuitbreakers
+  endpoint:
+    health:
+      show-details: always

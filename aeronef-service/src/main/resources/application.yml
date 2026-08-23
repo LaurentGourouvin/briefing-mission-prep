@@ -1,0 +1,26 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: aeronef-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/aeronef_db
+    username: briefing
+    password: briefing
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      jakarta:
+        persistence:
+          # lock timeout (ms) pour le verrou pessimiste : borne l'attente FOR UPDATE
+          lock:
+            timeout: 3000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: briefing-postgres
+    environment:
+      POSTGRES_USER: briefing
+      POSTGRES_PASSWORD: briefing
+      # On cree les 3 bases ci-dessous via le script init (une base par service :
+      # chaque microservice possede SES donnees, jamais de base partagee).
+    ports:
+      - "5432:5432"      # host:conteneur. Depuis les services -> host=postgres, port=5432
+    volumes:
+      - ./infra/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U briefing"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redpanda:
+    image: redpandadata/redpanda:v24.2.7
+    container_name: briefing-redpanda
+    command:
+      - redpanda
+      - start
+      - --smp=1                     # 1 coeur : on limite volontairement la conso
+      - --memory=512M               # plafond RAM : ne pas laisser Redpanda tout manger
+      - --overprovisioned
+      - --node-id=0
+      - --check=false
+      # DEUX listeners = le fix du footgun ADVERTISED :
+      - --kafka-addr=INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:19092
+      - --advertise-kafka-addr=INTERNAL://redpanda:9092,EXTERNAL://localhost:19092
+    ports:
+      - "19092:19092"   # <- depuis TON host : bootstrap = localhost:19092
+      - "9644:9644"     # admin API / metrics
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -q 'Healthy:.*true'"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

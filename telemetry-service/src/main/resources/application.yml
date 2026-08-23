@@ -1,0 +1,24 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: telemetry-service
+  kafka:
+    bootstrap-servers: localhost:19092   # host -> Redpanda (port EXTERNAL)
+    consumer:
+      group-id: telemetry
+      auto-offset-reset: earliest        # 1er demarrage : lire depuis le debut
+      enable-auto-commit: false          # on maitrise le commit d'offset (at-least-once propre)
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.nova.*"
+    listener:
+      ack-mode: MANUAL                    # ack apres traitement reussi
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
