@@ -8,6 +8,8 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.concurrent.TimeoutException;
+
 @RestControllerAdvice
 public class FeignErrorHandler {
 
@@ -24,5 +26,11 @@ public class FeignErrorHandler {
     public ProblemDetail handleAeronefUnavailable(AeronefIsNotAvailable e) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE,
                 e.getMessage());
+    }
+
+    @ExceptionHandler(TimeoutException.class)
+    public ProblemDetail handleTimeout(TimeoutException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE,
+                "Service aéronef indisponible (timeout)");
     }
 }
