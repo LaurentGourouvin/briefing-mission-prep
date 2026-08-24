@@ -1,5 +1,7 @@
 # Briefing — orchestration de préparation de mission (microservices)
 
+<div style="text-align: center;"><img src="./img/briefing.png" width="300"></div>
+
 **Briefing** est un système de préparation de mission de vol construit en microservices.
 Planifier une mission déclenche une **SAGA orchestrée** : réserver un aéronef, obtenir une
 autorisation de vol, puis provisionner la captation de télémétrie — avec compensation
