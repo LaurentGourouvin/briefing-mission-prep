@@ -58,8 +58,9 @@ resilience4j:
       aeronef:
         max-attempts: 3
         wait-duration: 300ms
-        # NE RETRY QUE les erreurs transitoires (5xx, IO, timeout).
-        # NE JAMAIS retry un refus metier (4xx deterministe) -> retry-exceptions / ignore-exceptions.
+        retry-exceptions:
+          - java.util.concurrent.TimeoutException
+          - feign.RetryableException
   timelimiter:
     instances:
       aeronef:

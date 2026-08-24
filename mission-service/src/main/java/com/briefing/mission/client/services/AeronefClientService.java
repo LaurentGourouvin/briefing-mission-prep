@@ -1,9 +1,9 @@
 package com.briefing.mission.client.services;
 
-import com.briefing.mission.api.exceptions.AeronefIsNotAvailable;
 import com.briefing.mission.client.AeronefClient;
 import com.briefing.mission.client.aeronefDto.ReservationRequest;
 import com.briefing.mission.client.aeronefDto.ReservationResponse;
+import io.github.resilience4j.retry.annotation.Retry;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,17 +15,16 @@ import java.util.concurrent.CompletableFuture;
 public class AeronefClientService {
 
     private final AeronefClient aeronefClient;
+    private static final Logger log = LoggerFactory.getLogger(AeronefClientService.class);
 
     public AeronefClientService(AeronefClient aeronefClient) {
         this.aeronefClient = aeronefClient;
     }
 
-    @TimeLimiter(name = "aeronef", fallbackMethod = "reserverFallback")
+    @TimeLimiter(name = "aeronef")
+    @Retry(name = "aeronef")
     public CompletableFuture<ReservationResponse> reserver(ReservationRequest req) {
         return CompletableFuture.supplyAsync(() -> aeronefClient.reserver(req));
     }
 
-    public CompletableFuture<ReservationResponse> reserverFallback(ReservationRequest req, Throwable t) {
-        throw new AeronefIsNotAvailable("Impossible to make reservation. Aeronef service timeout", t);
-    }
 }
