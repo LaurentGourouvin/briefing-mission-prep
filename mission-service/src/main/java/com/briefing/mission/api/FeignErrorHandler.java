@@ -2,6 +2,7 @@ package com.briefing.mission.api;
 
 import com.briefing.mission.api.exceptions.AeronefIsNotAvailable;
 import feign.FeignException;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
@@ -31,6 +32,12 @@ public class FeignErrorHandler {
     @ExceptionHandler(TimeoutException.class)
     public ProblemDetail handleTimeout(TimeoutException e) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE,
-                "Service aéronef indisponible (timeout)");
+                "Aircraft service unavailable (timeout)");
+    }
+
+    @ExceptionHandler(CallNotPermittedException.class)
+    public ProblemDetail handleCircuitOpen(CallNotPermittedException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE,
+                "Aircraft service temporarily unavailable");
     }
 }

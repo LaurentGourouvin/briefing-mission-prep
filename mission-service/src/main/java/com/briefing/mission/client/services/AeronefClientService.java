@@ -3,6 +3,7 @@ package com.briefing.mission.client.services;
 import com.briefing.mission.client.AeronefClient;
 import com.briefing.mission.client.aeronefDto.ReservationRequest;
 import com.briefing.mission.client.aeronefDto.ReservationResponse;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import org.slf4j.Logger;
@@ -23,6 +24,7 @@ public class AeronefClientService {
 
     @TimeLimiter(name = "aeronef")
     @Retry(name = "aeronef")
+    @CircuitBreaker(name = "aeronef")
     public CompletableFuture<ReservationResponse> reserver(ReservationRequest req) {
         return CompletableFuture.supplyAsync(() -> aeronefClient.reserver(req));
     }
