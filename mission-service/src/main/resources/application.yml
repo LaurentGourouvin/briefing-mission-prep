@@ -47,19 +47,19 @@ resilience4j:
       aeronef:
         sliding-window-type: COUNT_BASED
         sliding-window-size: 10
-        failure-rate-threshold: 50           # >=50% d'echecs sur la fenetre -> OPEN
-        wait-duration-in-open-state: 5s      # reste OPEN 5s puis -> HALF_OPEN
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 5s
         permitted-number-of-calls-in-half-open-state: 3
-        # A l'oral : OPEN = on rejette VITE (fail fast) sans appeler le service
-        # tombe -> on le protege ET on se protege (pas de threads bloques).
-        # HALF_OPEN = on laisse passer qq appels de test ; s'ils passent -> CLOSED.
+        ignore-exceptions:
+          - feign.FeignException.Conflict
   retry:
     instances:
       aeronef:
         max-attempts: 3
         wait-duration: 300ms
-        # NE RETRY QUE les erreurs transitoires (5xx, IO, timeout).
-        # NE JAMAIS retry un refus metier (4xx deterministe) -> retry-exceptions / ignore-exceptions.
+        retry-exceptions:
+          - java.util.concurrent.TimeoutException
+          - feign.RetryableException
   timelimiter:
     instances:
       aeronef:
