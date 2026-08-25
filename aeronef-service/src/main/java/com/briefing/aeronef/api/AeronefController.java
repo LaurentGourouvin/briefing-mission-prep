@@ -20,11 +20,6 @@ public class AeronefController {
         this.aeronefService = aeronefService;
     }
 
-    /**
-     * Reserve un aeronef disponible du bon type.
-     * TODO : transaction courte + verrou (optimiste OU pessimiste, justifie ton choix),
-     *        idempotence via cleIdempotence (2 appels identiques -> meme reservation).
-     */
     @PostMapping("/reservations")
     public ResponseEntity<ReservationResponse> reserver(@Valid @RequestBody ReservationRequest req) {
         ReservationResponse reservation = aeronefService.reserver(req);
@@ -35,12 +30,9 @@ public class AeronefController {
         return ResponseEntity.created(location).body(reservation);
     }
 
-    /**
-     * Compensation : libere une reservation. DOIT etre IDEMPOTENTE :
-     * liberer 2x, ou liberer une reservation inconnue -> 200/204, jamais 500.
-     */
     @DeleteMapping("/reservations/{id}")
-    public ResponseEntity<Void> liberer(@PathVariable String id) {
-        throw new UnsupportedOperationException("TODO Etape 3 : liberer (idempotent)");
+    public ResponseEntity<Void> freeReservation(@PathVariable Long id) {
+        this.aeronefService.freeReservation(id);
+        return ResponseEntity.noContent().build();
     }
 }
