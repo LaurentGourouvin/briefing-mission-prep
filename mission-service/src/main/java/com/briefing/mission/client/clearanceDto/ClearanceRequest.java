@@ -1,4 +1,4 @@
-package com.briefing.clearance.api.dto;
+package com.briefing.mission.client.clearanceDto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

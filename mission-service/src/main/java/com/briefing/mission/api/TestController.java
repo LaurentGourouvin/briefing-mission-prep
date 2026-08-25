@@ -1,9 +1,11 @@
 package com.briefing.mission.api;
 
-import com.briefing.mission.client.AeronefClient;
 import com.briefing.mission.client.aeronefDto.ReservationRequest;
 import com.briefing.mission.client.aeronefDto.ReservationResponse;
+import com.briefing.mission.client.clearanceDto.ClearanceRequest;
+import com.briefing.mission.client.clearanceDto.ClearanceResponse;
 import com.briefing.mission.client.services.AeronefClientService;
+import com.briefing.mission.client.services.ClearanceService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,9 +25,11 @@ import java.util.concurrent.CompletableFuture;
 @RequestMapping("/test")
 public class TestController {
     private final AeronefClientService aeronefClientService;
+    private final ClearanceService clearanceService;
 
-    public TestController(AeronefClientService aeronefClientService) {
+    public TestController(AeronefClientService aeronefClientService, ClearanceService clearanceService) {
         this.aeronefClientService = aeronefClientService;
+        this.clearanceService = clearanceService;
     }
 
     @PostMapping("/reserver")
@@ -38,5 +42,11 @@ public class TestController {
                 .toUri();
 
         return ResponseEntity.created(location).body(response);
+    }
+
+    @PostMapping("/clearances")
+    public ResponseEntity<ClearanceResponse> askClearance(@RequestBody ClearanceRequest req) {
+        ClearanceResponse res = clearanceService.askClearance(req);
+        return ResponseEntity.ok(res);
     }
 }
