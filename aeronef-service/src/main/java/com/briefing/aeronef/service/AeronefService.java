@@ -11,6 +11,7 @@ import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -32,7 +33,7 @@ public class AeronefService {
         Optional<Reservation> reservationExist = reservationRepository
                 .findByCodeMission(reservation.codeMission());
 
-        if(reservationExist.isPresent()) {
+        if (reservationExist.isPresent()) {
             Reservation r = reservationExist.get();
             return new ReservationResponse(r.getId(), r.getAeronefId());
         }
@@ -42,6 +43,17 @@ public class AeronefService {
         this.reservationRepository.save(newReservation);
 
         return new ReservationResponse(newReservation.getId(), newReservation.getAeronefId());
+    }
+
+    @Transactional
+    public void freeReservation(Long id) {
+        Optional<Reservation> reservation = reservationRepository.findById(id);
+
+        if (reservation.isPresent()) {
+            Optional<Aeronef> findAeronef = aeronefRepository.findById(reservation.get().getAeronefId());
+            findAeronef.ifPresent(aeronef -> aeronef.setDisponible(true));
+            reservationRepository.deleteById(id);
+        }
     }
 
 }
